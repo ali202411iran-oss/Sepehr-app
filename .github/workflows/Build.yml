@@ -37,10 +37,17 @@ jobs:
           sed -i 's/^source.include_exts = .*/source.include_exts = py/' buildozer.spec
           sed -i 's/^requirements = .*/requirements = python3,colorama/' buildozer.spec
           sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
-          sed -i 's/^android.api = .*/android.api = 34/' buildozer.spec
+          sed -i 's/^android.api = .*/android.api = 33/' buildozer.spec
           sed -i 's/^android.minapi = .*/android.minapi = 24/' buildozer.spec
           sed -i 's/^android.archs = .*/android.archs = arm64-v8a/' buildozer.spec
+          echo "android.build_tools_version = 33.0.2" >> buildozer.spec
           cp sepehr_eng.py main.py
+      
+      - name: Pre-accept SDK licenses
+        run: |
+          mkdir -p ~/.buildozer/android/platform/android-sdk
+          yes | ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager --licenses 2>/dev/null || true
+        continue-on-error: true
       
       - name: Build APK
         run: |
