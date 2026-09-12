@@ -8,25 +8,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container:
+      image: kivy/buildozer:latest
     
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-      
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake
-      
-      - name: Install buildozer
-        run: |
-          pip install --upgrade pip
-          pip install buildozer cython==0.29.36
       
       - name: Create buildozer.spec
         run: |
@@ -44,17 +31,10 @@ jobs:
       
       - name: Build APK
         run: |
-          export BUILDOZER_WARN_ON_ROOT=0
-          buildozer -v android debug
-        continue-on-error: false
-      
-      - name: Find APK
-        run: |
-          find . -name "*.apk" -type f
+          buildozer android debug
       
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: sepehr-apk
           path: bin/*.apk
-          if-no-files-found: error
