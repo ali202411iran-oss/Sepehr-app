@@ -1,38 +1,54 @@
 name: Build APK
 
-on: push
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-      
-      - name: Install dependencies
+          python-version: '3.10'
+
+      - name: Install system dependencies
         run: |
-          pip install buildozer cython
-      
-      - name: Setup buildozer
+          sudo apt-get update
+          sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev automake
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.36
+
+      - name: Create buildozer.spec
         run: |
           buildozer init
           sed -i 's/^title = .*/title = Sepehr/' buildozer.spec
           sed -i 's/^package.name = .*/package.name = sepehr/' buildozer.spec
           sed -i 's/^package.domain = .*/package.domain = org.sepehr/' buildozer.spec
+          sed -i 's/^source.include_exts = .*/source.include_exts = py,png,jpg,kv,atlas/' buildozer.spec
           sed -i 's/^requirements = .*/requirements = python3,colorama/' buildozer.spec
           sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
-          mv sepehr_eng.py main.py
-      
-      - name: Build APK
+          sed -i 's/^android.api = .*/android.api = 34/' buildozer.spec
+          sed -i 's/^android.minapi = .*/android.minapi = 21/' buildozer.spec
+          cp sepehr_eng.py main.py
+
+      - name: Build with Buildozer
         run: |
-          buildozer android debug
-      
+          yes | buildozer android debug
+        env:
+          BUILDOZER_WARN_ON_ROOT: 0
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: sepehr-apk
           path: bin/*.apk
+          if-no-files-found: warn
