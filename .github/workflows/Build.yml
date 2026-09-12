@@ -1,0 +1,38 @@
+name: Build APK
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install buildozer cython
+      
+      - name: Setup buildozer
+        run: |
+          buildozer init
+          sed -i 's/^title = .*/title = Sepehr/' buildozer.spec
+          sed -i 's/^package.name = .*/package.name = sepehr/' buildozer.spec
+          sed -i 's/^package.domain = .*/package.domain = org.sepehr/' buildozer.spec
+          sed -i 's/^requirements = .*/requirements = python3,colorama/' buildozer.spec
+          sed -i 's/^android.permissions = .*/android.permissions = INTERNET/' buildozer.spec
+          mv sepehr_eng.py main.py
+      
+      - name: Build APK
+        run: |
+          buildozer android debug
+      
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: sepehr-apk
+          path: bin/*.apk
